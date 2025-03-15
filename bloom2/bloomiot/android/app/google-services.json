@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "957472013508",
+    "firebase_url": "https://bloomapp-f4a5b-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "bloomapp-f4a5b",
+    "storage_bucket": "bloomapp-f4a5b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:957472013508:android:7380486c849cc4e3015d91",
+        "android_client_info": {
+          "package_name": "com.example.bloomiot"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCmphU4NwDnAjcyCLPglIM3ybNxXwjoZNY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
