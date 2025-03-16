@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'schedule.dart';
+import 'package:bloomiot/plants/plant_detail.dart';
+import 'package:bloomiot/actions/plant_select.dart'; // You'll need to create this file for PlantSelectionScreen
 
 class GardenScreen extends StatefulWidget {
   const GardenScreen({super.key});
@@ -55,9 +57,7 @@ class _GardenScreenState extends State<GardenScreen> {
           .inFilter('id', plantIds);
 
       final processedPlants = plantsResponse.map((plantData) {
-        return {
-          'plants': plantData,
-        };
+        return {'plants': plantData};
       }).toList();
 
       setState(() {
@@ -74,28 +74,52 @@ class _GardenScreenState extends State<GardenScreen> {
     }
   }
 
-  // Updated navigation function
-  void _navigateToPlantPage(String commonName, String scientificName) {
-    // Normalize the common name for page routing
-    final pageName = commonName.toLowerCase().replaceAll(' ', '_');
+  Widget _getPlantPage(String commonName, String scientificName) {
+    final normalizedName = commonName.toLowerCase().replaceAll(' ', '_');
+    String imageUrl;
+    switch (normalizedName) {
+      case 'tomato':
+        imageUrl =
+            'https://images.unsplash.com/photo-1592841200221-a6898f307baa?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80';
+        break;
+      case 'potato':
+        imageUrl =
+            'https://images.unsplash.com/photo-1518977676601-b53f82aba655?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80';
+        break;
+      case 'chilli':
+        imageUrl =
+            'https://images.unsplash.com/photo-1588252303782-cb80119abd6d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80';
+        break;
+      case 'bellpepper':
+        imageUrl =
+            'https://images.unsplash.com/photo-1526470498-9ae73c665de8?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80';
+        break;
+      case 'corn':
+        imageUrl =
+            'https://images.unsplash.com/photo-1551754655-cd27e38d2076?ixlib=rb-1.2.1&auto=format&fit=crop&w=1000&q=80';
+        break;
+      case 'eggplant':
+        imageUrl =
+            'https://cdn.pixabay.com/photo/2016/09/10/17/47/eggplant-1659784_1280.jpg';
+        break;
+      default:
+        imageUrl =
+            'https://images.unsplash.com/photo-1444853602635-9e634e3e4e43?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80';
+    }
 
-    // Create a map of known plant pages
-    final plantPages = {
-      'rose': RosePage(scientificName: scientificName),
-      'tulip': TulipPage(scientificName: scientificName),
-    };
-
-    // Check if we have a specific page for this plant
-    Widget destinationPage = plantPages[pageName] ??
-        DefaultPlantPage(
-            commonName: commonName, scientificName: scientificName);
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => destinationPage,
-      ),
+    return PlantDetailScreen(
+      commonName: commonName,
+      scientificName: scientificName,
+      imageUrl: imageUrl,
     );
+  }
+
+  String _getPlantImage(String? commonName) {
+    if (commonName == null || commonName.isEmpty) {
+      return 'assets/plants/default.png';
+    }
+    final normalizedName = commonName.toLowerCase().replaceAll(' ', '_');
+    return 'assets/plants/$normalizedName.png';
   }
 
   Widget _buildMyPlantsScreen() {
@@ -113,10 +137,54 @@ class _GardenScreenState extends State<GardenScreen> {
     }
 
     if (userPlants.isEmpty) {
-      return const Center(
-        child: Text(
-          'No plants associated with your account. Add plants in Plant Selection.',
-          style: TextStyle(fontSize: 16, color: Colors.grey),
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons
+                  .sentiment_dissatisfied_sharp, // Using a cross icon similar to your image
+              size: 48,
+              color: Colors.grey,
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'No plants associated with your account',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () {
+                // Navigate to Plant Selection screen
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const PlantSelectionScreen(),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1B5E20),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              child: const Text(
+                'Add Plants',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
         ),
       );
     }
@@ -134,21 +202,21 @@ class _GardenScreenState extends State<GardenScreen> {
                 name: commonName,
                 scientificName: scientificName,
                 image: _getPlantImage(commonName),
-                onTap: () => _navigateToPlantPage(commonName, scientificName),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          _getPlantPage(commonName, scientificName),
+                    ),
+                  );
+                },
               );
             }).toList(),
           ),
         ),
       ],
     );
-  }
-
-  String _getPlantImage(String? commonName) {
-    if (commonName == null || commonName.isEmpty) {
-      return 'assets/plants/default.png';
-    }
-    final normalizedName = commonName.toLowerCase().replaceAll(' ', '_');
-    return 'assets/plants/$normalizedName.png';
   }
 
   @override
@@ -287,14 +355,15 @@ class PlantCard extends StatelessWidget {
                 width: 80,
                 height: 80,
                 decoration: BoxDecoration(
-                  color: Colors.grey[200],
+                  color: const Color(0xFFE2E2E2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Image.asset(
                   image,
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) {
-                    return const Icon(Icons.spa, color: Colors.green);
+                    return const Icon(Icons.spa,
+                        color: Color.fromARGB(255, 14, 63, 16));
                   },
                 ),
               ),
@@ -330,81 +399,6 @@ class PlantCard extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-// Plant-specific pages
-class RosePage extends StatelessWidget {
-  final String scientificName;
-
-  const RosePage({super.key, required this.scientificName});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Rose')),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text('Rose Page'),
-            Text('Scientific Name: $scientificName'),
-            // Add rose-specific content
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class TulipPage extends StatelessWidget {
-  final String scientificName;
-
-  const TulipPage({super.key, required this.scientificName});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Tulip')),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text('Tulip Page'),
-            Text('Scientific Name: $scientificName'),
-            // Add tulip-specific content
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class DefaultPlantPage extends StatelessWidget {
-  final String commonName;
-  final String scientificName;
-
-  const DefaultPlantPage({
-    super.key,
-    required this.commonName,
-    required this.scientificName,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(commonName)),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('Plant: $commonName'),
-            Text('Scientific Name: $scientificName'),
-            const Text('No specific page available'),
-          ],
         ),
       ),
     );

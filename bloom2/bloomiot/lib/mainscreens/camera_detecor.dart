@@ -104,7 +104,7 @@ class _PlantRecognitionScreenState extends State<PlantRecognitionScreen> {
       final plantNetResult = await _checkWithPlantNet();
 
       if (plantNetResult != null) {
-        final topResult = plantNetResult as Map<String, dynamic>;
+        final topResult = plantNetResult;
         final score = (topResult['score'] as num?)?.toDouble() ?? 0.0;
         final species = topResult['species'] as Map<String, dynamic>? ?? {};
         final scientificName =
@@ -115,19 +115,21 @@ class _PlantRecognitionScreenState extends State<PlantRecognitionScreen> {
                 .toList() ??
             [];
 
-        // Check if it's one of our specialized plants
-        String? specializedKey;
+        // Check for specialized plants
+        String? specializedPlant;
         for (var key in _specializedAPIs.keys) {
           if (scientificName.contains(key) ||
               commonNames.any((name) => name.contains(key))) {
-            specializedKey = key;
+            specializedPlant = key;
             break;
           }
         }
 
-        if (specializedKey != null && score >= 0.7) {
-          await _analyzeWithSpecializedAPI(_specializedAPIs[specializedKey]!);
+        if (specializedPlant != null && score >= 0.7) {
+          // Use specialized API for specific plants
+          await _analyzeWithSpecializedAPI(_specializedAPIs[specializedPlant]!);
         } else {
+          // Fallback to PlantNet results
           setState(() {
             _plantData = {
               'name': scientificName.isNotEmpty
@@ -175,8 +177,7 @@ class _PlantRecognitionScreenState extends State<PlantRecognitionScreen> {
         }
         return null;
       } else {
-        throw Exception(
-            'PlantNet API error: Status ${response.statusCode} - ${response.reasonPhrase}');
+        throw Exception('PlantNet API error: Status ${response.statusCode}');
       }
     } catch (e) {
       print('PlantNet API Exception: $e');
@@ -205,8 +206,7 @@ class _PlantRecognitionScreenState extends State<PlantRecognitionScreen> {
           };
         });
       } else {
-        throw Exception(
-            'Specialized API failed with status: ${response.statusCode}');
+        throw Exception('Specialized API failed: ${response.statusCode}');
       }
     } catch (e) {
       throw Exception('Specialized API error: $e');
@@ -220,7 +220,6 @@ class _PlantRecognitionScreenState extends State<PlantRecognitionScreen> {
       body: SafeArea(
         child: Stack(
           children: [
-            // Loading overlay
             if (_isLoading)
               Container(
                 color: Colors.black.withOpacity(0.45),
@@ -228,8 +227,6 @@ class _PlantRecognitionScreenState extends State<PlantRecognitionScreen> {
                   child: CircularProgressIndicator(color: Colors.green),
                 ),
               ),
-
-            // Back button
             Positioned(
               top: 20,
               left: 20,
@@ -244,8 +241,6 @@ class _PlantRecognitionScreenState extends State<PlantRecognitionScreen> {
                 ),
               ),
             ),
-
-            // Message banner
             Positioned(
               top: 80,
               left: 0,
@@ -271,8 +266,6 @@ class _PlantRecognitionScreenState extends State<PlantRecognitionScreen> {
                 ),
               ),
             ),
-
-            // Image preview
             Center(
               child: Container(
                 height: 300,
@@ -289,8 +282,6 @@ class _PlantRecognitionScreenState extends State<PlantRecognitionScreen> {
                     : const Center(child: Icon(Icons.camera_alt, size: 50)),
               ),
             ),
-
-            // Results or buttons
             Positioned(
               bottom: 40,
               left: 20,

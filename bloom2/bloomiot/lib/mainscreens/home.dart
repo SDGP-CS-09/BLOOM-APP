@@ -1,25 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:bloomiot/garden/my_plants.dart';
-import 'package:bloomiot/plants/potato.dart';
 import 'package:bloomiot/mainscreens/camera_detecor.dart';
+import 'package:bloomiot/plants/meters_screen.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: const HomeScreen(),
-    );
-  }
-}
+import 'package:bloomiot/actions/explore_plants.dart';
+import 'package:bloomiot/mainscreens/settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -116,9 +103,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final List<Widget> _pages = [
     HomePageContent(),
-    const PlantDetailScreen(),
+    SensorDashboard(),
     const GardenScreen(),
-    const Center(child: Text("Profile Page", style: TextStyle(fontSize: 20))),
+    const SettingsScreen(),
   ];
 
   void _onItemTapped(int index) {
@@ -153,7 +140,7 @@ class _HomeScreenState extends State<HomeScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _buildNavItem('assets/icons/Vector 300 (Stroke).png', 0),
-              _buildNavItem('assets/icons/profile-2user.png', 1),
+              _buildNavItem('assets/icons/devices.png', 1),
               const SizedBox(width: 50),
               _buildNavItem('assets/icons/tree.png', 2),
               _buildNavItem('assets/icons/profile-circle.png', 3),
@@ -187,7 +174,7 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 class HomePageContent extends StatelessWidget {
-  HomePageContent({Key? key}) : super(key: key);
+  HomePageContent({super.key});
 
   final List<Map<String, dynamic>> categories = [
     {'text': 'Orchid', 'icon': Icons.spa, 'isSelected': true},
@@ -201,27 +188,31 @@ class HomePageContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = context.findAncestorStateOfType<_HomeScreenState>();
 
-    return Stack(
-      children: [
-        Container(
-          height: 200,
-          width: double.infinity,
-          decoration: const BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage('assets/illustrations/home_main.png'),
-              fit: BoxFit.cover,
-            ),
-          ),
-        ),
-        SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Stack(
             children: [
               Container(
+                height: 250,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  image: const DecorationImage(
+                    image: AssetImage('assets/illustrations/home_main.png'),
+                    fit: BoxFit.cover,
+                  ),
+                  borderRadius: const BorderRadius.vertical(
+                    bottom: Radius.circular(20),
+                  ),
+                ),
+              ),
+              Padding(
                 padding: const EdgeInsets.only(
                     top: 50, left: 16, right: 16, bottom: 10),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
                       padding: const EdgeInsets.all(8),
@@ -232,6 +223,7 @@ class HomePageContent extends StatelessWidget {
                       child: const Icon(Icons.apps, color: Colors.black54),
                     ),
                     Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         const Text(
                           'Your location',
@@ -269,29 +261,41 @@ class HomePageContent extends StatelessWidget {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText: "Search plants & Flowers",
-                    prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                    filled: true,
-                    fillColor: Colors.white,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(30),
-                      borderSide: BorderSide.none,
+                padding: const EdgeInsets.only(top: 120, left: 20, right: 20),
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ExplorePlantsScreen(),
+                      ),
+                    );
+                  },
+                  child: AbsorbPointer(
+                    child: TextField(
+                      enabled: false,
+                      decoration: InputDecoration(
+                        hintText: "Search plants & Flowers",
+                        prefixIcon:
+                            const Icon(Icons.search, color: Colors.grey),
+                        filled: true,
+                        fillColor: Colors.white,
+                        contentPadding:
+                            const EdgeInsets.symmetric(vertical: 10),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                padding: const EdgeInsets.only(top: 200, left: 20, right: 20),
                 child: Container(
-                  width: MediaQuery.of(context).size.width *
-                      0.95, // 85% of screen width
-                  height: MediaQuery.of(context).size.height *
-                      0.12, // 12% of screen height
+                  width: MediaQuery.of(context).size.width * 0.95,
+                  height: MediaQuery.of(context).size.height * 0.12,
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
@@ -329,88 +333,182 @@ class HomePageContent extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
-              SizedBox(
-                height: 50,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: categories.length,
-                  itemBuilder: (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 10),
-                      child: CategoryButton(
-                        icon: categories[index]['icon'],
-                        text: categories[index]['text'],
-                        isSelected: categories[index]['isSelected'],
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 20),
-              const SizedBox(height: 24),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.0),
-                child: Text(
-                  'All Features',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: FeatureCard(
-                        title: 'Diagnose',
-                        subtitle: "Check your plant's health",
-                        imagePath: 'assets/plants/feature1_img.png',
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: FeatureCard(
-                        title: 'Identify',
-                        subtitle: 'Recognize a plant',
-                        imagePath: 'assets/plants/feature2_img.png',
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: FeatureCard(
-                        title: 'IOT Watering',
-                        subtitle: 'Optimize watering for your plant',
-                        imagePath: 'assets/plants/feature3_img.png',
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: FeatureCard(
-                        title: 'Reminders',
-                        subtitle: 'Stay on top of your plant care',
-                        imagePath: 'assets/plants/feature4_img.png',
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 80),
             ],
           ),
-        ),
-      ],
+          const SizedBox(height: 20),
+          SizedBox(
+            height: 50,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: categories.length,
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: CategoryButton(
+                    icon: categories[index]['icon'],
+                    text: categories[index]['text'],
+                    isSelected: categories[index]['isSelected'],
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 20),
+          // "Check your plant" card inserted here
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+            child: Container(
+              width: double.infinity,
+              height: 158,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 5,
+                    spreadRadius: 1,
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  // Plant image
+                  Image.asset(
+                    'assets/illustrations/card.png',
+                    width: 80,
+                    height: 120,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      width: 80,
+                      height: 120,
+                      color: Colors.grey.shade200,
+                      child: const Icon(
+                        Icons.photo,
+                        color: Colors.grey,
+                        size: 40,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  // Text content
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          "Check your plant",
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF1F4E20),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          "Take photos, start diagnose diseases & get plant care tips",
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        // Diagnose button
+                        SizedBox(
+                          height: 36,
+                          width: 100,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const PlantRecognitionScreen(),
+                                ),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF1F4E20),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(18),
+                              ),
+                              padding: EdgeInsets.zero,
+                            ),
+                            child: const Text("Diagnose"),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          // "All Features" section
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.0),
+            child: Text(
+              'All Features',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: FeatureCard(
+                    title: 'Diagnose',
+                    subtitle: "Check your plant's health",
+                    imagePath: 'assets/plants/feature1_img.png',
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: FeatureCard(
+                    title: 'Identify',
+                    subtitle: 'Recognize a plant',
+                    imagePath: 'assets/plants/feature2_img.png',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: FeatureCard(
+                    title: 'IOT Watering',
+                    subtitle: 'Optimize watering for your plant',
+                    imagePath: 'assets/plants/feature3_img.png',
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: FeatureCard(
+                    title: 'Reminders',
+                    subtitle: 'Stay on top of your plant care',
+                    imagePath: 'assets/plants/feature4_img.png',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 80),
+        ],
+      ),
     );
   }
 }
@@ -421,11 +519,11 @@ class CategoryButton extends StatelessWidget {
   final bool isSelected;
 
   const CategoryButton({
-    Key? key,
+    super.key,
     required this.icon,
     required this.text,
     required this.isSelected,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -474,11 +572,11 @@ class FeatureCard extends StatelessWidget {
   final String imagePath;
 
   const FeatureCard({
-    Key? key,
+    super.key,
     required this.title,
     required this.subtitle,
     required this.imagePath,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
