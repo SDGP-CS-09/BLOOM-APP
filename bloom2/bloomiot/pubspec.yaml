@@ -19,7 +19,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.6.2
+  sdk: ">=3.6.2 <4.0.0"
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -39,6 +39,17 @@ dependencies:
   cloud_firestore: ^5.6.3
   intl: ^0.20.2
   flutter_staggered_animations: ^1.1.1
+  camera: ^0.11.1
+  image: ^3.0.2
+  http: ^1.2.0
+  path_provider: ^2.1.1
+  path: ^1.8.3
+  geolocator: ^13.0.2
+  image_picker: ^0.8.4+4
+  permission_handler: ^11.3.1
+  supabase_flutter: ^2.8.3
+  syncfusion_flutter_gauges: ^28.2.9
+  #supabase_flutter: ^1.10.25
   
 
 dev_dependencies:
@@ -63,6 +74,10 @@ flutter:
     - assets/chilli.jpg
     - assets/potato.jpg
     - assets/egg-plant.jpg
+    - assets/logos/
+    - assets/icons/
+    - assets/illustrations/
+    - assets/plants/
     
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
