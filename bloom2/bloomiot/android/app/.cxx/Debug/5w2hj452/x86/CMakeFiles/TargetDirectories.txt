@@ -1,0 +1,2 @@
+C:/Users/user/Downloads/bloom2/bloomiot/android/app/.cxx/Debug/5w2hj452/x86/CMakeFiles/edit_cache.dir
+C:/Users/user/Downloads/bloom2/bloomiot/android/app/.cxx/Debug/5w2hj452/x86/CMakeFiles/rebuild_cache.dir
