@@ -8,7 +8,6 @@ import 'dart:convert';
 import 'package:bloomiot/actions/explore_plants.dart';
 import 'package:bloomiot/mainscreens/settings_screen.dart';
 import 'package:bloomiot/schedule.dart';
-import 'package:bloomiot/plant_watering_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -666,4 +665,3 @@ class FeatureCard extends StatelessWidget {
     );
   }
 }
-
