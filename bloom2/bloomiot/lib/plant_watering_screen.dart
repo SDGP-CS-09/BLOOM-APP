@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'schedule.dart';
 
 class PlantWateringScreen extends StatefulWidget {
   const PlantWateringScreen({super.key});
@@ -14,6 +15,7 @@ class _PlantWateringScreenState extends State<PlantWateringScreen> {
   String _selectedDuration = '120 seconds';
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
+  String _currentMode = 'manual';
 
   final List<String> _plants = [
     'Tomato',
@@ -31,22 +33,127 @@ class _PlantWateringScreenState extends State<PlantWateringScreen> {
     '240 seconds',
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _initializeModeListener();
+  }
+
+  void _initializeModeListener() {
+    _databaseRef.child('system/mode').onValue.listen((event) {
+      final mode = event.snapshot.value?.toString() ?? 'manual';
+      if (mounted) {
+        setState(() => _currentMode = mode);
+      }
+    });
+  }
+
+  Widget _buildModeWarning() {
+    if (_currentMode == 'auto') {
+      return Container(
+        padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.03),
+        margin: EdgeInsets.only(bottom: MediaQuery.of(context).size.height * 0.03),
+        decoration: BoxDecoration(
+          color: Colors.amber[100],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.amber),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.warning_amber_rounded,
+                color: Colors.amber, size: MediaQuery.of(context).size.width * 0.05),
+            SizedBox(width: MediaQuery.of(context).size.width * 0.03),
+            Expanded(
+              child: Text(
+                'Automatic watering mode is active. Scheduling is disabled.',
+                style: TextStyle(
+                  color: Colors.amber[800],
+                  fontSize: MediaQuery.of(context).size.width * 0.035,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    return const SizedBox.shrink();
+  }
+
+  Widget _buildModeSwitch() {
+    return Container(
+      padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.04),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            blurRadius: 6,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Watering Mode',
+                  style: TextStyle(
+                    fontSize: MediaQuery.of(context).size.width * 0.04,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[800],
+                  ),
+                ),
+                Text(
+                  _currentMode == 'auto' ? 'Automatic (Soil Moisture)' : 'Manual (Scheduled)',
+                  style: TextStyle(
+                    fontSize: MediaQuery.of(context).size.width * 0.035,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: _currentMode == 'auto',
+            activeColor: const Color(0xFF1B5E20),
+            onChanged: (value) => _updateMode(value),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _updateMode(bool isAuto) {
+    final mode = isAuto ? 'auto' : 'manual';
+    _databaseRef.child('system/mode').set(mode).then((_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Mode changed to $mode'),
+          backgroundColor: const Color(0xFF1B5E20),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    });
+  }
+
   Future<void> _selectDate(BuildContext context) async {
     final pickedDate = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
       firstDate: DateTime.now(),
       lastDate: DateTime(2101),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFF003300),
-            ),
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: const ColorScheme.light(
+            primary: Color(0xFF1B5E20),
           ),
-          child: child!,
-        );
-      },
+        ),
+        child: child!,
+      ),
     );
     if (pickedDate != null) {
       setState(() => _selectedDate = pickedDate);
@@ -57,16 +164,14 @@ class _PlantWateringScreenState extends State<PlantWateringScreen> {
     final pickedTime = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFF003300),
-            ),
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: const ColorScheme.light(
+            primary: Color(0xFF1B5E20),
           ),
-          child: child!,
-        );
-      },
+        ),
+        child: child!,
+      ),
     );
     if (pickedTime != null) {
       setState(() => _selectedTime = pickedTime);
@@ -74,17 +179,22 @@ class _PlantWateringScreenState extends State<PlantWateringScreen> {
   }
 
   Future<void> _saveSchedule() async {
+    if (_currentMode == 'auto') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Cannot save schedule in automatic mode'),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
     if (_selectedDate == null || _selectedTime == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Please select date and time!'),
+        const SnackBar(
+          content: Text('Please select date and time!'),
           backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          margin: EdgeInsets.only(
-            bottom: MediaQuery.of(context).size.height * 0.02,
-            left: MediaQuery.of(context).size.width * 0.04,
-            right: MediaQuery.of(context).size.width * 0.04,
-          ),
         ),
       );
       return;
@@ -103,8 +213,7 @@ class _PlantWateringScreenState extends State<PlantWateringScreen> {
 
     try {
       final schedulesSnapshot = await plantRef.child('schedules').get();
-      if (schedulesSnapshot.exists &&
-          (schedulesSnapshot.value as Map).length >= 4) {
+      if (schedulesSnapshot.exists && (schedulesSnapshot.value as Map).length >= 4) {
         throw 'Maximum 4 schedules allowed per plant';
       }
 
@@ -116,19 +225,16 @@ class _PlantWateringScreenState extends State<PlantWateringScreen> {
       });
 
       if (!mounted) return;
-      Navigator.pop(context, true);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const ScheduleScreen()),
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e.toString()),
           backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          margin: EdgeInsets.only(
-            bottom: MediaQuery.of(context).size.height * 0.02,
-            left: MediaQuery.of(context).size.width * 0.04,
-            right: MediaQuery.of(context).size.width * 0.04,
-          ),
         ),
       );
     }
@@ -137,83 +243,50 @@ class _PlantWateringScreenState extends State<PlantWateringScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF4FAF4),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.05),
-          child: Column(
-            children: [
-              _buildHeader(),
-              SizedBox(height: MediaQuery.of(context).size.height * 0.04),
-              _buildPlantDropdown(),
-              _buildDatePicker(),
-              _buildTimePicker(),
-              _buildDurationDropdown(),
-              SizedBox(height: MediaQuery.of(context).size.height * 0.05),
-              _buildSaveButton(),
-            ],
-          ),
+      backgroundColor: const Color.fromARGB(255, 241, 239, 230),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, size: MediaQuery.of(context).size.width * 0.05),
+          onPressed: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const ScheduleScreen()),
+            );
+          },
+        ),
+        title: Text(
+          'Create Watering Schedule',
+          style: TextStyle(fontSize: MediaQuery.of(context).size.width * 0.045),
+        ),
+      ),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.05),
+        child: Column(
+          children: [
+            _buildModeWarning(),
+            _buildModeSwitch(),
+            SizedBox(height: MediaQuery.of(context).size.height * 0.04),
+            _buildPlantDropdown(),
+            _buildDatePicker(),
+            _buildTimePicker(),
+            _buildDurationDropdown(),
+            SizedBox(height: MediaQuery.of(context).size.height * 0.05),
+            _buildSaveButton(),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildHeader() {
-    return Row(
-      children: [
-        IconButton(
-          icon: const Icon(Icons.arrow_back),
-          iconSize: MediaQuery.of(context).size.width * 0.06,
-          onPressed: () => Navigator.pop(context),
-        ),
-        Expanded(
-          child: Center(
-            child: Text(
-              'Set Watering',
-              style: TextStyle(
-                fontSize: MediaQuery.of(context).size.width * 0.06,
-                fontWeight: FontWeight.bold,
-                color: const Color(0xFF003300),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildPlantDropdown() {
-    return _buildDropdown(
-      label: 'Choose Plant',
-      value: _selectedPlant,
-      items: _plants,
-      onChanged: (value) => setState(() => _selectedPlant = value!),
-    );
-  }
-
-  Widget _buildDurationDropdown() {
-    return _buildDropdown(
-      label: 'Duration',
-      value: _selectedDuration,
-      items: _durations,
-      onChanged: (value) => setState(() => _selectedDuration = value!),
-    );
-  }
-
-  Widget _buildDropdown({
-    required String label,
-    required String value,
-    required List<String> items,
-    required ValueChanged<String?> onChanged,
-  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          label,
+          'Choose Plant',
           style: TextStyle(
-            color: const Color(0xFF003300),
-            fontSize: MediaQuery.of(context).size.width * 0.045,
+            color: _currentMode == 'auto' ? Colors.grey : const Color(0xFF1B5E20),
+            fontSize: MediaQuery.of(context).size.width * 0.04,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -221,7 +294,7 @@ class _PlantWateringScreenState extends State<PlantWateringScreen> {
         Container(
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(15),
+            borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
                 color: Colors.grey.withOpacity(0.1),
@@ -231,27 +304,21 @@ class _PlantWateringScreenState extends State<PlantWateringScreen> {
             ],
           ),
           child: DropdownButtonFormField<String>(
-            value: value,
-            items: items
-                .map((e) => DropdownMenuItem(
-                      value: e,
-                      child: Text(
-                        e,
-                        style: TextStyle(
-                          fontSize: MediaQuery.of(context).size.width * 0.04,
-                        ),
-                      ),
-                    ))
-                .toList(),
-            onChanged: onChanged,
+            value: _selectedPlant,
+            items: _plants.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+            onChanged: _currentMode == 'auto'
+                ? null
+                : (value) => setState(() => _selectedPlant = value!),
             decoration: InputDecoration(
               contentPadding: EdgeInsets.symmetric(
-                horizontal: MediaQuery.of(context).size.width * 0.05,
-                vertical: MediaQuery.of(context).size.height * 0.02,
+                horizontal: MediaQuery.of(context).size.width * 0.04,
+                vertical: MediaQuery.of(context).size.height * 0.015,
               ),
               border: InputBorder.none,
             ),
-            icon: const Icon(Icons.arrow_drop_down, color: Color(0xFF003300)),
+            icon: Icon(Icons.arrow_drop_down,
+                color: _currentMode == 'auto' ? Colors.grey : const Color(0xFF1B5E20),
+                size: MediaQuery.of(context).size.width * 0.05),
           ),
         ),
         SizedBox(height: MediaQuery.of(context).size.height * 0.03),
@@ -266,8 +333,8 @@ class _PlantWateringScreenState extends State<PlantWateringScreen> {
         Text(
           'Select Date',
           style: TextStyle(
-            color: const Color(0xFF003300),
-            fontSize: MediaQuery.of(context).size.width * 0.045,
+            color: _currentMode == 'auto' ? Colors.grey : const Color(0xFF1B5E20),
+            fontSize: MediaQuery.of(context).size.width * 0.04,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -275,7 +342,7 @@ class _PlantWateringScreenState extends State<PlantWateringScreen> {
         Container(
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(15),
+            borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
                 color: Colors.grey.withOpacity(0.1),
@@ -285,19 +352,18 @@ class _PlantWateringScreenState extends State<PlantWateringScreen> {
             ],
           ),
           child: ListTile(
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: MediaQuery.of(context).size.width * 0.05,
-              vertical: MediaQuery.of(context).size.height * 0.01,
-            ),
+            enabled: _currentMode != 'auto',
             title: Text(
               _selectedDate?.toString().split(' ')[0] ?? 'Select date',
               style: TextStyle(
-                fontSize: MediaQuery.of(context).size.width * 0.04,
+                color: _currentMode == 'auto' ? Colors.grey : Colors.black,
+                fontSize: MediaQuery.of(context).size.width * 0.035,
               ),
             ),
-            trailing:
-                const Icon(Icons.calendar_today, color: Color(0xFF003300)),
-            onTap: () => _selectDate(context),
+            trailing: Icon(Icons.calendar_today,
+                color: _currentMode == 'auto' ? Colors.grey : const Color(0xFF1B5E20),
+                size: MediaQuery.of(context).size.width * 0.05),
+            onTap: _currentMode == 'auto' ? null : () => _selectDate(context),
           ),
         ),
         SizedBox(height: MediaQuery.of(context).size.height * 0.03),
@@ -312,8 +378,8 @@ class _PlantWateringScreenState extends State<PlantWateringScreen> {
         Text(
           'Select Time',
           style: TextStyle(
-            color: const Color(0xFF003300),
-            fontSize: MediaQuery.of(context).size.width * 0.045,
+            color: _currentMode == 'auto' ? Colors.grey : const Color(0xFF1B5E20),
+            fontSize: MediaQuery.of(context).size.width * 0.04,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -321,7 +387,7 @@ class _PlantWateringScreenState extends State<PlantWateringScreen> {
         Container(
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(15),
+            borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
                 color: Colors.grey.withOpacity(0.1),
@@ -331,18 +397,66 @@ class _PlantWateringScreenState extends State<PlantWateringScreen> {
             ],
           ),
           child: ListTile(
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: MediaQuery.of(context).size.width * 0.05,
-              vertical: MediaQuery.of(context).size.height * 0.01,
-            ),
+            enabled: _currentMode != 'auto',
             title: Text(
               _selectedTime?.format(context) ?? 'Select time',
               style: TextStyle(
-                fontSize: MediaQuery.of(context).size.width * 0.04,
+                color: _currentMode == 'auto' ? Colors.grey : Colors.black,
+                fontSize: MediaQuery.of(context).size.width * 0.035,
               ),
             ),
-            trailing: const Icon(Icons.access_time, color: Color(0xFF003300)),
-            onTap: () => _selectTime(context),
+            trailing: Icon(Icons.access_time,
+                color: _currentMode == 'auto' ? Colors.grey : const Color(0xFF1B5E20),
+                size: MediaQuery.of(context).size.width * 0.05),
+            onTap: _currentMode == 'auto' ? null : () => _selectTime(context),
+          ),
+        ),
+        SizedBox(height: MediaQuery.of(context).size.height * 0.03),
+      ],
+    );
+  }
+
+  Widget _buildDurationDropdown() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Duration',
+          style: TextStyle(
+            color: _currentMode == 'auto' ? Colors.grey : const Color(0xFF1B5E20),
+            fontSize: MediaQuery.of(context).size.width * 0.04,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        SizedBox(height: MediaQuery.of(context).size.height * 0.015),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.1),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: DropdownButtonFormField<String>(
+            value: _selectedDuration,
+            items: _durations.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+            onChanged: _currentMode == 'auto'
+                ? null
+                : (value) => setState(() => _selectedDuration = value!),
+            decoration: InputDecoration(
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: MediaQuery.of(context).size.width * 0.04,
+                vertical: MediaQuery.of(context).size.height * 0.015,
+              ),
+              border: InputBorder.none,
+            ),
+            icon: Icon(Icons.arrow_drop_down,
+                color: _currentMode == 'auto' ? Colors.grey : const Color(0xFF1B5E20),
+                size: MediaQuery.of(context).size.width * 0.05),
           ),
         ),
         SizedBox(height: MediaQuery.of(context).size.height * 0.03),
@@ -351,34 +465,23 @@ class _PlantWateringScreenState extends State<PlantWateringScreen> {
   }
 
   Widget _buildSaveButton() {
-    return Container(
+    return SizedBox(
       width: double.infinity,
-      height: MediaQuery.of(context).size.height * 0.07,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF003300).withOpacity(0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
       child: ElevatedButton(
-        onPressed: _saveSchedule,
+        onPressed: _currentMode == 'auto' ? null : _saveSchedule,
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF1F4E20),
-          elevation: 0,
+          backgroundColor: const Color(0xFF1B5E20),
+          padding: EdgeInsets.symmetric(vertical: MediaQuery.of(context).size.height * 0.02),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
+            borderRadius: BorderRadius.circular(12),
           ),
         ),
         child: Text(
           'Save Schedule',
           style: TextStyle(
-            fontSize: MediaQuery.of(context).size.width * 0.045,
-            fontWeight: FontWeight.w600,
+            fontSize: MediaQuery.of(context).size.width * 0.04,
             color: Colors.white,
+            fontWeight: FontWeight.bold,
           ),
         ),
       ),
