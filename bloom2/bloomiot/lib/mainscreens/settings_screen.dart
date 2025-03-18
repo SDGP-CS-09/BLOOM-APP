@@ -98,7 +98,7 @@ class SettingsScreen extends StatelessWidget {
           SizedBox(height: 40),
           Center(
             child: Text(
-              'Version 1.0.0',
+              'Version 1.1.0',
               style: TextStyle(
                 color: Colors.grey.shade600,
                 fontSize: 12,
