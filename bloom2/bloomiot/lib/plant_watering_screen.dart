@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'schedule.dart';
+
+import 'package:bloomiot/mainscreens/home.dart';
 
 class PlantWateringScreen extends StatefulWidget {
   const PlantWateringScreen({super.key});
@@ -227,7 +228,7 @@ class _PlantWateringScreenState extends State<PlantWateringScreen> {
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const ScheduleScreen()),
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
       );
     } catch (e) {
       if (!mounted) return;
@@ -243,14 +244,15 @@ class _PlantWateringScreenState extends State<PlantWateringScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 241, 239, 230),
+      backgroundColor: const Color(0xFFF4FAF4),
       appBar: AppBar(
+        
         leading: IconButton(
           icon: Icon(Icons.arrow_back, size: MediaQuery.of(context).size.width * 0.05),
           onPressed: () {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (_) => const ScheduleScreen()),
+              MaterialPageRoute(builder: (_) => const HomeScreen()),
             );
           },
         ),

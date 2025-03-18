@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
-
+import 'package:bloomiot/mainscreens/home.dart'; 
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -76,13 +76,34 @@ class _SensorDashboardState extends State<SensorDashboard> {
     return 0.0; // Default to 0.0 for unexpected types
   }
 
+  // Back button handler
+  void _handleBack(BuildContext context) {
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (context) => HomeScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF4FAF4),
       appBar: AppBar(
-        title: Text('Plant Sensor Dashboard'),
-        backgroundColor: Color(0xFFF4FAF4),
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () => _handleBack(context), // Added back button
+          color: Colors.black87,
+        ),
+        title: Text(
+          'Plant Sensor Dashboard',
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF1B5E20),
+          ),
+        ),
+        centerTitle: true,
+        backgroundColor: const Color(0xFFF4FAF4),
+        iconTheme: IconThemeData(color: Colors.black87),
       ),
       body: SingleChildScrollView(
         child: Column(
