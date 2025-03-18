@@ -8,7 +8,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:bloomiot/plant_watering_screen.dart';
+import 'package:bloomiot/main.dart'; // Adjust the import path to where MyApp is defined
 
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
