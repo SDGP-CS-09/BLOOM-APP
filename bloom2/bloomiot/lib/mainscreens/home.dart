@@ -7,6 +7,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:bloomiot/actions/explore_plants.dart';
 import 'package:bloomiot/mainscreens/settings_screen.dart';
+import 'package:bloomiot/schedule.dart';
+import 'package:bloomiot/plant_watering_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -355,7 +357,7 @@ class HomePageContent extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
-          // "Check your plant" card inserted here
+          // "Check your plant" card with Diagnose button navigation
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20.0),
             child: Container(
@@ -375,7 +377,6 @@ class HomePageContent extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  // Plant image
                   Image.asset(
                     'assets/illustrations/card.png',
                     width: 80,
@@ -392,7 +393,6 @@ class HomePageContent extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  // Text content
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -416,7 +416,6 @@ class HomePageContent extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        // Diagnose button
                         SizedBox(
                           height: 36,
                           width: 100,
@@ -449,7 +448,6 @@ class HomePageContent extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
-          // "All Features" section
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.0),
             child: Text(
@@ -466,18 +464,38 @@ class HomePageContent extends StatelessWidget {
             child: Row(
               children: [
                 Expanded(
-                  child: FeatureCard(
-                    title: 'Diagnose',
-                    subtitle: "Check your plant's health",
-                    imagePath: 'assets/plants/feature1_img.png',
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const PlantRecognitionScreen(),
+                        ),
+                      );
+                    },
+                    child: FeatureCard(
+                      title: 'Diagnose',
+                      subtitle: "Check your plant's health",
+                      imagePath: 'assets/plants/feature1_img.png',
+                    ),
                   ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: FeatureCard(
-                    title: 'Identify',
-                    subtitle: 'Recognize a plant',
-                    imagePath: 'assets/plants/feature2_img.png',
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const GardenScreen(),
+                        ),
+                      );
+                    },
+                    child: FeatureCard(
+                      title: 'My plants',
+                      subtitle: 'You are selected plants ',
+                      imagePath: 'assets/plants/feature2_img.png',
+                    ),
                   ),
                 ),
               ],
@@ -489,18 +507,38 @@ class HomePageContent extends StatelessWidget {
             child: Row(
               children: [
                 Expanded(
-                  child: FeatureCard(
-                    title: 'IOT Watering',
-                    subtitle: 'Optimize watering for your plant',
-                    imagePath: 'assets/plants/feature3_img.png',
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => SensorDashboard(),
+                        ),
+                      );
+                    },
+                    child: FeatureCard(
+                      title: 'IOT Watering',
+                      subtitle: 'Optimize watering for your plant',
+                      imagePath: 'assets/plants/feature3_img.png',
+                    ),
                   ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: FeatureCard(
-                    title: 'Reminders',
-                    subtitle: 'Stay on top of your plant care',
-                    imagePath: 'assets/plants/feature4_img.png',
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ScheduleScreen(),
+                        ),
+                      );
+                    },
+                    child: FeatureCard(
+                      title: 'Reminders',
+                      subtitle: 'Stay on top of your plant care',
+                      imagePath: 'assets/plants/feature4_img.png',
+                    ),
                   ),
                 ),
               ],
@@ -628,3 +666,4 @@ class FeatureCard extends StatelessWidget {
     );
   }
 }
+

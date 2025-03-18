@@ -6,11 +6,11 @@ class PlantDetailScreen extends StatelessWidget {
   final String imageUrl;
 
   const PlantDetailScreen({
-    super.key,
+    Key? key,
     required this.commonName,
     required this.scientificName,
     required this.imageUrl,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

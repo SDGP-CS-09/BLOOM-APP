@@ -3,7 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:bloomiot/mainscreens/home.dart'; // Import HomeScreen from home.dart
 
 class PlantSelectionScreen extends StatefulWidget {
-  const PlantSelectionScreen({super.key});
+  const PlantSelectionScreen({Key? key}) : super(key: key);
 
   @override
   State<PlantSelectionScreen> createState() => _PlantSelectionScreenState();

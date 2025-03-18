@@ -1,0 +1,2 @@
+C:/Users/Sulochana/Documents/GitHub/BLOOM-APP/bloom2/bloomiot/android/app/.cxx/Debug/3034376x/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/Users/Sulochana/Documents/GitHub/BLOOM-APP/bloom2/bloomiot/android/app/.cxx/Debug/3034376x/armeabi-v7a/CMakeFiles/rebuild_cache.dir

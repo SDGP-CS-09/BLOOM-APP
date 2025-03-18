@@ -3,7 +3,7 @@ import 'package:bloomiot/auth/signin_screen.dart';
 import 'package:bloomiot/mainscreens/home.dart';
 
 class SettingsScreen extends StatelessWidget {
-  const SettingsScreen({super.key});
+  const SettingsScreen({Key? key}) : super(key: key);
 
   // Logout handler
   void _handleLogout(BuildContext context) {

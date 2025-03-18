@@ -18,13 +18,13 @@ class _PlantRecognitionScreenState extends State<PlantRecognitionScreen> {
   Map<String, dynamic>? _plantData;
   bool _isLoading = false;
   final ImagePicker _picker = ImagePicker();
+  String? _selectedModel;
 
-  static const String _plantNetApiKey = '2b108O6ZMXegZ0z8HgQuA6lTu';
   static const Map<String, String> _specializedAPIs = {
-    'bell_pepper': 'https://bellpepper-production.up.railway.app/predict',
-    'corn': 'https://corn-production.up.railway.app/predict',
-    'eggplant': 'https://eggplant-production.up.railway.app/predict',
-    'potato': 'https://potato-production.up.railway.app/predict',
+    'Bell Pepper': 'https://bellpepper-production.up.railway.app/predict',
+    'Corn': 'https://corn-production.up.railway.app/predict',
+    'Eggplant': 'https://eggplant-production.up.railway.app/predict',
+    'Potato': 'https://potato-production.up.railway.app/predict',
   };
 
   Future<bool> _requestPermissions() async {
@@ -40,8 +40,7 @@ class _PlantRecognitionScreenState extends State<PlantRecognitionScreen> {
   Future<void> _captureImage() async {
     try {
       if (await _requestPermissions()) {
-        final XFile? image =
-            await _picker.pickImage(source: ImageSource.camera);
+        final XFile? image = await _picker.pickImage(source: ImageSource.camera);
         if (image != null) {
           setState(() {
             _image = File(image.path);
@@ -65,8 +64,7 @@ class _PlantRecognitionScreenState extends State<PlantRecognitionScreen> {
   Future<void> _uploadImage() async {
     try {
       if (await _requestPermissions()) {
-        final XFile? image =
-            await _picker.pickImage(source: ImageSource.gallery);
+        final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
         if (image != null) {
           setState(() {
             _image = File(image.path);
@@ -95,61 +93,24 @@ class _PlantRecognitionScreenState extends State<PlantRecognitionScreen> {
       return;
     }
 
+    if (_selectedModel == null) {
+      setState(() {
+        _errorMessage = 'Please select a plant model first';
+      });
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _errorMessage = '';
     });
 
     try {
-      final plantNetResult = await _checkWithPlantNet();
-
-      if (plantNetResult != null) {
-        final topResult = plantNetResult;
-        final score = (topResult['score'] as num?)?.toDouble() ?? 0.0;
-        final species = topResult['species'] as Map<String, dynamic>? ?? {};
-        final scientificName =
-            species['scientificNameWithoutAuthor']?.toString().toLowerCase() ??
-                '';
-        final commonNames = (species['commonNames'] as List<dynamic>?)
-                ?.map((name) => name.toString().toLowerCase())
-                .toList() ??
-            [];
-
-        // Check for specialized plants
-        String? specializedPlant;
-        for (var key in _specializedAPIs.keys) {
-          if (scientificName.contains(key) ||
-              commonNames.any((name) => name.contains(key))) {
-            specializedPlant = key;
-            break;
-          }
-        }
-
-        if (specializedPlant != null && score >= 0.7) {
-          // Use specialized API for specific plants
-          await _analyzeWithSpecializedAPI(_specializedAPIs[specializedPlant]!);
-        } else {
-          // Fallback to PlantNet results
-          setState(() {
-            _plantData = {
-              'name': scientificName.isNotEmpty
-                  ? scientificName
-                  : (commonNames.isNotEmpty
-                      ? commonNames.first
-                      : 'Unknown Plant'),
-              'confidence': (score * 100).toStringAsFixed(2),
-              'source': 'PlantNet'
-            };
-          });
-        }
-      } else {
-        setState(() {
-          _errorMessage = 'No plant identified';
-        });
-      }
+      await _analyzeWithSpecializedAPI(_specializedAPIs[_selectedModel]!);
     } catch (e) {
       setState(() {
-        _errorMessage = 'Analysis error: $e';
+        _plantData = null;
+        _errorMessage = 'Analysis error: Exception: Specialized API error: Exception: Specialized API failed: $e';
       });
     } finally {
       setState(() {
@@ -158,41 +119,12 @@ class _PlantRecognitionScreenState extends State<PlantRecognitionScreen> {
     }
   }
 
-  Future<Map<String, dynamic>?> _checkWithPlantNet() async {
-    try {
-      final url = Uri.parse(
-          'https://my-api.plantnet.org/v2/identify/all?api-key=$_plantNetApiKey&lang=en');
-      var request = http.MultipartRequest('POST', url)
-        ..fields['organs'] = 'leaf'
-        ..files.add(await http.MultipartFile.fromPath('images', _image!.path));
-
-      final response =
-          await request.send().timeout(const Duration(seconds: 30));
-      final responseData = await response.stream.bytesToString();
-
-      if (response.statusCode == 200) {
-        final jsonResponse = json.decode(responseData) as Map<String, dynamic>;
-        if (jsonResponse['results']?.isNotEmpty ?? false) {
-          return jsonResponse['results'][0] as Map<String, dynamic>;
-        }
-        return null;
-      } else {
-        throw Exception('PlantNet API error: Status ${response.statusCode}');
-      }
-    } catch (e) {
-      print('PlantNet API Exception: $e');
-      throw Exception('PlantNet API failed: $e');
-    }
-  }
-
   Future<void> _analyzeWithSpecializedAPI(String apiUrl) async {
     try {
       var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
-      request.files
-          .add(await http.MultipartFile.fromPath('file', _image!.path));
+      request.files.add(await http.MultipartFile.fromPath('file', _image!.path));
 
-      final response =
-          await request.send().timeout(const Duration(seconds: 30));
+      final response = await request.send().timeout(const Duration(seconds: 30));
       final responseData = await response.stream.bytesToString();
 
       if (response.statusCode == 200) {
@@ -202,14 +134,15 @@ class _PlantRecognitionScreenState extends State<PlantRecognitionScreen> {
             'name': jsonResponse['class'] ?? 'Unknown',
             'confidence': ((jsonResponse['confidence'] as num?) ?? 0.0 * 100)
                 .toStringAsFixed(2),
-            'source': 'Specialized Model'
+            'source': _selectedModel
           };
+          _errorMessage = '';
         });
       } else {
-        throw Exception('Specialized API failed: ${response.statusCode}');
+        throw Exception('Status ${response.statusCode}');
       }
     } catch (e) {
-      throw Exception('Specialized API error: $e');
+      throw Exception(e.toString());
     }
   }
 
@@ -242,12 +175,32 @@ class _PlantRecognitionScreenState extends State<PlantRecognitionScreen> {
               ),
             ),
             Positioned(
+              top: 20,
+              right: 20,
+              child: DropdownButton<String>(
+                value: _selectedModel,
+                hint: const Text('Select Model'),
+                items: _specializedAPIs.keys.map((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _selectedModel = newValue;
+                    _plantData = null;
+                    _errorMessage = '';
+                  });
+                },
+              ),
+            ),
+            Positioned(
               top: 80,
               left: 0,
               right: 0,
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
                 margin: const EdgeInsets.symmetric(horizontal: 40),
                 decoration: BoxDecoration(
                   color: Colors.black.withOpacity(0.7),
@@ -286,8 +239,8 @@ class _PlantRecognitionScreenState extends State<PlantRecognitionScreen> {
               bottom: 40,
               left: 20,
               right: 20,
-              child: _plantData != null
-                  ? _buildPlantInfoCard()
+              child: _plantData != null || _errorMessage.isNotEmpty
+                  ? _buildResultCard()
                   : _buildActionButtons(),
             ),
           ],
@@ -296,7 +249,7 @@ class _PlantRecognitionScreenState extends State<PlantRecognitionScreen> {
     );
   }
 
-  Widget _buildPlantInfoCard() {
+  Widget _buildResultCard() {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -312,25 +265,41 @@ class _PlantRecognitionScreenState extends State<PlantRecognitionScreen> {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Name: ${_plantData?['name'] ?? 'Unknown'}',
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.green,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Confidence: ${_plantData?['confidence'] ?? 'N/A'}%',
-            style: const TextStyle(fontSize: 14, color: Colors.grey),
-          ),
-          Text(
-            'Source: ${_plantData?['source'] ?? 'Unknown'}',
-            style: const TextStyle(fontSize: 14, color: Colors.grey),
-          ),
-        ],
+        children: _plantData != null
+            ? [
+                Text(
+                  'Name: ${_plantData?['name'] ?? 'Unknown'}',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Confidence: ${_plantData?['confidence'] ?? 'N/A'}%',
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+                Text(
+                  'Source: ${_plantData?['source'] ?? 'Unknown'}',
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+              ]
+            : [
+                Text(
+                  'Analysis Error',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.red,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _errorMessage,
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+              ],
       ),
     );
   }
