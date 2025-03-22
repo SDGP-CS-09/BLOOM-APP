@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:http_parser/http_parser.dart'; // For MediaType
 
 class PlantRecognitionScreen extends StatefulWidget {
   const PlantRecognitionScreen({super.key});
@@ -40,7 +41,8 @@ class _PlantRecognitionScreenState extends State<PlantRecognitionScreen> {
   Future<void> _captureImage() async {
     try {
       if (await _requestPermissions()) {
-        final XFile? image = await _picker.pickImage(source: ImageSource.camera);
+        final XFile? image =
+            await _picker.pickImage(source: ImageSource.camera);
         if (image != null) {
           setState(() {
             _image = File(image.path);
@@ -64,7 +66,8 @@ class _PlantRecognitionScreenState extends State<PlantRecognitionScreen> {
   Future<void> _uploadImage() async {
     try {
       if (await _requestPermissions()) {
-        final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+        final XFile? image =
+            await _picker.pickImage(source: ImageSource.gallery);
         if (image != null) {
           setState(() {
             _image = File(image.path);
@@ -110,7 +113,7 @@ class _PlantRecognitionScreenState extends State<PlantRecognitionScreen> {
     } catch (e) {
       setState(() {
         _plantData = null;
-        _errorMessage = 'Analysis error: Exception: Specialized API error: Exception: Specialized API failed: $e';
+        _errorMessage = 'Failed to analyze plant: $e';
       });
     } finally {
       setState(() {
@@ -122,9 +125,31 @@ class _PlantRecognitionScreenState extends State<PlantRecognitionScreen> {
   Future<void> _analyzeWithSpecializedAPI(String apiUrl) async {
     try {
       var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
-      request.files.add(await http.MultipartFile.fromPath('file', _image!.path));
 
-      final response = await request.send().timeout(const Duration(seconds: 30));
+      // Add the file with the correct field name and content type
+      String fieldName =
+          'file'; // Adjust this based on API documentation (e.g., 'image')
+      String fileExtension = _image!.path.split('.').last.toLowerCase();
+      String mimeType = fileExtension == 'png' ? 'image/png' : 'image/jpeg';
+
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          fieldName,
+          _image!.path,
+          contentType: MediaType('image', fileExtension),
+        ),
+      );
+
+      // Add headers (adjust as needed based on API requirements)
+      request.headers['Content-Type'] = 'multipart/form-data';
+      // Uncomment and add API key if required
+      // request.headers['Authorization'] = 'Bearer YOUR_API_KEY';
+
+      // Add additional fields if required by the API
+      // request.fields['model'] = _selectedModel!.toLowerCase();
+
+      final response =
+          await request.send().timeout(const Duration(seconds: 30));
       final responseData = await response.stream.bytesToString();
 
       if (response.statusCode == 200) {
@@ -139,10 +164,12 @@ class _PlantRecognitionScreenState extends State<PlantRecognitionScreen> {
           _errorMessage = '';
         });
       } else {
-        throw Exception('Status ${response.statusCode}');
+        // Log the response body for debugging
+        print('Error response from $apiUrl: $responseData');
+        throw Exception('Status ${response.statusCode}: $responseData');
       }
     } catch (e) {
-      throw Exception(e.toString());
+      throw Exception('API request failed: $e');
     }
   }
 
@@ -200,7 +227,8 @@ class _PlantRecognitionScreenState extends State<PlantRecognitionScreen> {
               left: 0,
               right: 0,
               child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
                 margin: const EdgeInsets.symmetric(horizontal: 40),
                 decoration: BoxDecoration(
                   color: Colors.black.withOpacity(0.7),
