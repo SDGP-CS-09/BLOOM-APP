@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:bloomiot/actions/plant_select.dart';
+import 'package:bloomiot/mainscreens/home.dart';
 
 class SetupScreen extends StatelessWidget {
   const SetupScreen({super.key});
@@ -60,11 +61,16 @@ class SetupScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // Open camera button (remains unchanged for now, you can update its functionality later)
+            // Open camera functionality changed to skip button
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => HomeScreen()),
+                  );
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1B5E20),
                   minimumSize: const Size(double.infinity, 50),
@@ -73,7 +79,7 @@ class SetupScreen extends StatelessWidget {
                   ),
                 ),
                 child: const Text(
-                  'Open Camera',
+                  'Skip',
                   style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
