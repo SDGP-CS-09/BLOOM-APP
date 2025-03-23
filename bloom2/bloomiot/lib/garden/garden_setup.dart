@@ -72,10 +72,14 @@ class SetupScreen extends StatelessWidget {
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1B5E20),
+                  backgroundColor: const Color.fromARGB(255, 228, 232, 228),
                   minimumSize: const Size(double.infinity, 50),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(25),
+                    side: const BorderSide(
+                      color: Color.fromARGB(255, 74, 143, 78), // Green border
+                      width: 2,
+                    ),
                   ),
                 ),
                 child: const Text(
@@ -83,7 +87,7 @@ class SetupScreen extends StatelessWidget {
                   style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: Colors.white),
+                      color: Color.fromARGB(255, 32, 84, 7)),
                 ),
               ),
             ),
