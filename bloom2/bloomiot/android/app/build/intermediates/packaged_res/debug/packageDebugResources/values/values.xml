@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="firebase_database_url" translatable="false">https://bloomapp-f4a5b-default-rtdb.asia-southeast1.firebasedatabase.app</string>
+    <string name="gcm_defaultSenderId" translatable="false">957472013508</string>
+    <string name="google_api_key" translatable="false">AIzaSyCmphU4NwDnAjcyCLPglIM3ybNxXwjoZNY</string>
+    <string name="google_app_id" translatable="false">1:957472013508:android:7380486c849cc4e3015d91</string>
+    <string name="google_crash_reporting_api_key" translatable="false">AIzaSyCmphU4NwDnAjcyCLPglIM3ybNxXwjoZNY</string>
+    <string name="google_storage_bucket" translatable="false">bloomapp-f4a5b.firebasestorage.app</string>
+    <string name="project_id" translatable="false">bloomapp-f4a5b</string>
+    <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        
+        <item name="android:windowBackground">@drawable/launch_background</item>
+    </style>
+    <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">?android:colorBackground</item>
+    </style>
+</resources>
