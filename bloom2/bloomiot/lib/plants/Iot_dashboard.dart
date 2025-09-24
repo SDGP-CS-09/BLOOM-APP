@@ -1,5 +1,6 @@
+import 'package:bloomiot/plants/meters_screen.dart' show SensorDashboard;
 import 'package:flutter/material.dart';
-import 'package:bloomiot/mainscreens/home.dart'; // Assuming this exists based on your existing code
+import 'package:bloomiot/mainscreens/home.dart'; // Assuming this exists
 
 class IoTDashboard extends StatefulWidget {
   const IoTDashboard({super.key});
@@ -14,25 +15,52 @@ class _IoTDashboardState extends State<IoTDashboard> {
     PlantCategory(
       name: 'Plant Chillies',
       plants: [
-        PlantData(id: '01', imageUrl: 'https://images.unsplash.com/photo-1583400797511-3a789b2dd50e?w=400'),
-        PlantData(id: '02', imageUrl: 'https://images.unsplash.com/photo-1583400797511-3a789b2dd50e?w=400'),
-        PlantData(id: '03', imageUrl: 'https://images.unsplash.com/photo-1583400797511-3a789b2dd50e?w=400'),
+        PlantData(
+            id: '01',
+            imageUrl:
+                'https://images.unsplash.com/photo-1583400797511-3a789b2dd50e?w=400'),
+        PlantData(
+            id: '02',
+            imageUrl:
+                'https://images.unsplash.com/photo-1583400797511-3a789b2dd50e?w=400'),
+        PlantData(
+            id: '03',
+            imageUrl:
+                'https://images.unsplash.com/photo-1583400797511-3a789b2dd50e?w=400'),
       ],
     ),
     PlantCategory(
       name: 'Bell pepper',
       plants: [
-        PlantData(id: '01', imageUrl: 'https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?w=400'),
-        PlantData(id: '02', imageUrl: 'https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?w=400'),
-        PlantData(id: '03', imageUrl: 'https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?w=400'),
+        PlantData(
+            id: '04',
+            imageUrl:
+                'https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?w=400'),
+        PlantData(
+            id: '05',
+            imageUrl:
+                'https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?w=400'),
+        PlantData(
+            id: '06',
+            imageUrl:
+                'https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?w=400'),
       ],
     ),
     PlantCategory(
       name: 'Plant Corn',
       plants: [
-        PlantData(id: '01', imageUrl: 'https://images.unsplash.com/photo-1551754655-cd27e38d2076?w=400'),
-        PlantData(id: '02', imageUrl: 'https://images.unsplash.com/photo-1551754655-cd27e38d2076?w=400'),
-        PlantData(id: '03', imageUrl: 'https://images.unsplash.com/photo-1551754655-cd27e38d2076?w=400'),
+        PlantData(
+            id: '07',
+            imageUrl:
+                'https://images.unsplash.com/photo-1551754655-cd27e38d2076?w=400'),
+        PlantData(
+            id: '08',
+            imageUrl:
+                'https://images.unsplash.com/photo-1551754655-cd27e38d2076?w=400'),
+        PlantData(
+            id: '09',
+            imageUrl:
+                'https://images.unsplash.com/photo-1551754655-cd27e38d2076?w=400'),
       ],
     ),
   ];
@@ -44,14 +72,15 @@ class _IoTDashboardState extends State<IoTDashboard> {
     );
   }
 
-  // Handle plant card tap
+  // Handle plant card tap with navigation to SensorDashboard
   void _handlePlantTap(String categoryName, String plantId) {
-    // Navigate to plant details or sensor data
-    // You can replace this with your actual navigation logic
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Tapped on $categoryName - Plant $plantId'),
-        backgroundColor: const Color(0xFF1B5E20),
+    // Map plantId (e.g., '01', '02', '03') to 'Set_1', 'Set_2', 'Set_3'
+    final setId =
+        'Set_${int.parse(plantId)}'; // Convert '01' to 1, then to 'Set_1'
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SensorDashboard(plantId: setId),
       ),
     );
   }
@@ -85,46 +114,12 @@ class _IoTDashboardState extends State<IoTDashboard> {
           children: [
             SizedBox(height: 20),
             // Build plant categories
-            ...plantCategories.map((category) => 
-              _buildPlantCategoryRow(category)
-            ).toList(),
-            SizedBox(height: 100), // Space for floating action button
+            ...plantCategories
+                .map((category) => _buildPlantCategoryRow(category))
+                .toList(),
           ],
         ),
       ),
-      floatingActionButton: Container(
-        width: 60,
-        height: 60,
-        decoration: BoxDecoration(
-          color: const Color(0xFF1B5E20),
-          borderRadius: BorderRadius.circular(30),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              spreadRadius: 2,
-              blurRadius: 8,
-              offset: Offset(0, 4),
-            ),
-          ],
-        ),
-        child: IconButton(
-          icon: Icon(
-            Icons.qr_code_scanner,
-            color: Colors.white,
-            size: 28,
-          ),
-          onPressed: () {
-            // Handle QR code scanner
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('QR Code Scanner pressed'),
-                backgroundColor: const Color(0xFF1B5E20),
-              ),
-            );
-          },
-        ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 
@@ -133,9 +128,9 @@ class _IoTDashboardState extends State<IoTDashboard> {
       padding: EdgeInsets.only(bottom: 24),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: category.plants.map((plant) => 
-          _buildPlantCard(category.name, plant)
-        ).toList(),
+        children: category.plants
+            .map((plant) => _buildPlantCard(category.name, plant))
+            .toList(),
       ),
     );
   }
@@ -171,7 +166,6 @@ class _IoTDashboardState extends State<IoTDashboard> {
                       plant.imageUrl,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) {
-                        // Fallback container with plant icon
                         return Container(
                           color: Colors.green[100],
                           child: Icon(

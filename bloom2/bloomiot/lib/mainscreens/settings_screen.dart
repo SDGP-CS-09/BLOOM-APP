@@ -24,45 +24,48 @@ class SettingsScreen extends StatelessWidget {
   }
 
   // Unsubscribe handler
- Future<void> _handleUnsubscribe(BuildContext context) async {
-  final supabase = Supabase.instance.client;
-  final user = supabase.auth.currentUser; // Get current logged-in user
-  if (user == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('No user logged in')),
+  Future<void> _handleUnsubscribe(BuildContext context) async {
+    final supabase = Supabase.instance.client;
+    final user = supabase.auth.currentUser; // Get current logged-in user
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No user logged in')),
+      );
+      return;
+    }
+
+    final response = await supabase
+        .from('api_data')
+        .select('sub_id')
+        .eq('user_id', user.id) // Match with current user's ID
+        .single(); // Assuming one record per user
+    final subId =
+        response['sub_id'] as String? ?? 'tel:94716177301'; // Default if null
+
+    final url = Uri.parse('http://56.228.42.92:8000/subscription/send');
+    final responseApi = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json;charset=utf-8'},
+      body: jsonEncode({
+        'applicationId': 'APP_009348', // Replace with your app ID
+        'password':
+            '953fe2fee66c8b602c05284a8f98f090', // Replace with your password
+        'subscriberId': subId,
+        'action': '0',
+      }),
     );
-    return;
+
+    if (responseApi.statusCode == 200) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Unsubscription successful')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Unsubscription failed: ${responseApi.body}')),
+      );
+    }
   }
 
-  final response = await supabase
-      .from('api_data')
-      .select('sub_id')
-      .eq('user_id', user.id) // Match with current user's ID
-      .single(); // Assuming one record per user
-  final subId = response['sub_id'] as String? ?? 'tel:94716177301'; // Default if null
-
-  final url = Uri.parse('http://56.228.42.92:8000/subscription/send');
-  final responseApi = await http.post(
-    url,
-    headers: {'Content-Type': 'application/json;charset=utf-8'},
-    body: jsonEncode({
-      'applicationId': 'APP_009348', // Replace with your app ID
-      'password': '953fe2fee66c8b602c05284a8f98f090', // Replace with your password
-      'subscriberId': subId,
-      'action': '0',
-    }),
-  );
-
-  if (responseApi.statusCode == 200) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Unsubscription successful')),
-    );
-  } else {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Unsubscription failed: ${responseApi.body}')),
-    );
-  }
-}
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -130,7 +133,7 @@ class SettingsScreen extends StatelessWidget {
           SizedBox(height: 40),
           Center(
             child: Text(
-              'Version 1.1.0',
+              'Version 1.2.0',
               style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
             ),
           ),

@@ -72,6 +72,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
             headers: {'Content-Type': 'application/json'},
           );
 
+          print('Response body: ${otpResponse.body}');
+
           if (otpResponse.statusCode == 200) {
             final jsonResponse = jsonDecode(otpResponse.body);
             final referenceNo = jsonResponse['referenceNo'];

@@ -1,3 +1,4 @@
+import 'package:bloomiot/plants/Iot_dashboard.dart';
 import 'package:flutter/material.dart';
 import 'package:bloomiot/garden/my_plants.dart';
 import 'package:bloomiot/mainscreens/camera_detecor.dart';
@@ -104,7 +105,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final List<Widget> _pages = [
     HomePageContent(),
-    SensorDashboard(),
+    IoTDashboard(),
     const GardenScreen(),
     const SettingsScreen(),
   ];
@@ -511,7 +512,7 @@ class HomePageContent extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => SensorDashboard(),
+                          builder: (context) => IoTDashboard(),
                         ),
                       );
                     },
