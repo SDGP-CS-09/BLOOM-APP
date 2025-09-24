@@ -41,8 +41,9 @@ class _PlantRecognitionScreenState extends State<PlantRecognitionScreen> {
   Future<void> _captureImage() async {
     try {
       if (await _requestPermissions()) {
-        final XFile? image =
-            await _picker.pickImage(source: ImageSource.camera);
+        final XFile? image = await _picker.pickImage(
+          source: ImageSource.camera,
+        );
         if (image != null) {
           setState(() {
             _image = File(image.path);
@@ -66,8 +67,9 @@ class _PlantRecognitionScreenState extends State<PlantRecognitionScreen> {
   Future<void> _uploadImage() async {
     try {
       if (await _requestPermissions()) {
-        final XFile? image =
-            await _picker.pickImage(source: ImageSource.gallery);
+        final XFile? image = await _picker.pickImage(
+          source: ImageSource.gallery,
+        );
         if (image != null) {
           setState(() {
             _image = File(image.path);
@@ -148,8 +150,9 @@ class _PlantRecognitionScreenState extends State<PlantRecognitionScreen> {
       // Add additional fields if required by the API
       // request.fields['model'] = _selectedModel!.toLowerCase();
 
-      final response =
-          await request.send().timeout(const Duration(seconds: 30));
+      final response = await request.send().timeout(
+        const Duration(seconds: 30),
+      );
       final responseData = await response.stream.bytesToString();
 
       if (response.statusCode == 200) {
@@ -159,7 +162,7 @@ class _PlantRecognitionScreenState extends State<PlantRecognitionScreen> {
             'name': jsonResponse['class'] ?? 'Unknown',
             'confidence': ((jsonResponse['confidence'] as num?) ?? 0.0 * 100)
                 .toStringAsFixed(2),
-            'source': _selectedModel
+            'source': _selectedModel,
           };
           _errorMessage = '';
         });
@@ -227,8 +230,10 @@ class _PlantRecognitionScreenState extends State<PlantRecognitionScreen> {
               left: 0,
               right: 0,
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 12,
+                  horizontal: 24,
+                ),
                 margin: const EdgeInsets.symmetric(horizontal: 40),
                 decoration: BoxDecoration(
                   color: Colors.black.withOpacity(0.7),
@@ -256,10 +261,12 @@ class _PlantRecognitionScreenState extends State<PlantRecognitionScreen> {
                   color: Colors.grey[200],
                 ),
                 child: _image != null
-                    ? Image.file(_image!,
+                    ? Image.file(
+                        _image!,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) =>
-                            const Icon(Icons.error))
+                            const Icon(Icons.error),
+                      )
                     : const Center(child: Icon(Icons.camera_alt, size: 50)),
               ),
             ),
