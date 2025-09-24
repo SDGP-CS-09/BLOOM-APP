@@ -1,9 +1,10 @@
 import 'dart:convert';
+import 'package:bloomiot/auth/otp_verification.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:bloomiot/garden/garden_setup.dart'; // Adjust the import path as needed for PlantSelectionScreen
+// Adjust the import path as needed for PlantSelectionScreen
 import 'signin_screen.dart'; // Add this import for navigation to SignInScreen
 
 class SignUpScreen extends StatefulWidget {
@@ -54,18 +55,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
           final subscriberId = 'tel:94${phone.substring(1)}';
           final url = Uri.parse('http://56.228.42.92:8000/otp/request');
           final body = {
-            "applicationId": "APP_099348",
-            "password": "953fe2fee66c86b602c0250284a8f98f690",
+            "applicationId": "APP_009348",
+            "password": "953fe2fee66c8b602c05284a8f98f090",
             "subscriberId": subscriberId,
-            "applicationHash": "abodefgh",
+            "applicationHash": "abcdefgh",
             "applicationMetaData": {
               "client": "MOBILEAPP",
               "device": "Samsung S10",
-              "os": "Android 8",
+              "os": "android 8",
               "appCode": "https://play.google.com/store/apps/details?id=lk"
             }
           };
-
           final otpResponse = await http.post(
             url,
             body: jsonEncode(body),
@@ -80,7 +80,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
             final userId = Supabase.instance.client.auth.currentUser!.id;
             await Supabase.instance.client.from('api_data').insert({
               'uuid': userId,
-              'sub_id': subscriberId,
               'ref_no': referenceNo,
             });
           } else {
@@ -93,7 +92,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const SetupScreen()),
+            MaterialPageRoute(
+                builder: (context) => const OTPVerificationScreen()),
           );
         } else {
           throw Exception('User sign-up failed: No user returned');
@@ -107,7 +107,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
       } catch (e) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('An unexpected error occurred: ${e.toString()}')),
+          SnackBar(
+              content: Text('An unexpected error occurred: ${e.toString()}')),
         );
         print('Unexpected error: ${e.toString()}');
       } finally {
@@ -168,8 +169,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     if (value == null || value.isEmpty) {
                       return 'Please enter your phone number';
                     }
-                    if (value.length != 10 || !value.startsWith('071') || !RegExp(r'^\d{10}$').hasMatch(value)) {
-                      return 'Phone must be 10 digits starting with 071';
+                    if (value.length != 10 ||
+                        !value.startsWith('071') ||
+                        !RegExp(r'^\d{10}$').hasMatch(value)) {
+                      return 'Phone must be 10 digits starting with 071/070';
                     }
                     return null;
                   },
@@ -184,7 +187,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     if (value == null || value.isEmpty) {
                       return 'Please enter your email';
                     }
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                        .hasMatch(value)) {
                       return 'Please enter a valid email';
                     }
                     return null;
@@ -202,15 +206,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     onPressed: _isLoading ? null : _signUpWithEmail,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF1F4E20),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(50)),
                     ),
                     child: _isLoading
-                        ? const CircularProgressIndicator(color: Color(0xFFF4FAF4))
+                        ? const CircularProgressIndicator(
+                            color: Color(0xFFF4FAF4))
                         : const Text('Sign Up',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFFF4FAF4))),
+                            style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFFF4FAF4))),
                   ),
                 ),
-                
                 const SizedBox(height: 24),
                 Center(
                   child: RichText(
@@ -220,12 +228,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       children: [
                         TextSpan(
                           text: 'Sign In',
-                          style: const TextStyle(color: Color(0xFF1A2530), fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                              color: Color(0xFF1A2530),
+                              fontWeight: FontWeight.bold),
                           recognizer: TapGestureRecognizer()
                             ..onTap = () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (context) => const SignInScreen()),
+                                MaterialPageRoute(
+                                    builder: (context) => const SignInScreen()),
                               );
                             },
                         ),
@@ -255,7 +266,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Color(0xFF2D3436)),
+          style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF2D3436)),
         ),
         const SizedBox(height: 5),
         TextFormField(
@@ -285,7 +299,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
       children: [
         const Text(
           'Password',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Color(0xFF2D3436)),
+          style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF2D3436)),
         ),
         const SizedBox(height: 5),
         TextFormField(
@@ -306,7 +323,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
             filled: true,
             fillColor: Colors.white,
             suffixIcon: IconButton(
-              icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility, color: Colors.grey),
+              icon: Icon(
+                  _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                  color: Colors.grey),
               onPressed: () {
                 setState(() {
                   _obscurePassword = !_obscurePassword;
@@ -330,7 +349,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
       children: [
         const Text(
           'Confirm Password',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Color(0xFF2D3436)),
+          style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF2D3436)),
         ),
         const SizedBox(height: 5),
         TextFormField(
@@ -351,7 +373,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
             filled: true,
             fillColor: Colors.white,
             suffixIcon: IconButton(
-              icon: Icon(_obscureConfirmPassword ? Icons.visibility_off : Icons.visibility, color: Colors.grey),
+              icon: Icon(
+                  _obscureConfirmPassword
+                      ? Icons.visibility_off
+                      : Icons.visibility,
+                  color: Colors.grey),
               onPressed: () {
                 setState(() {
                   _obscureConfirmPassword = !_obscureConfirmPassword;

@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class OTPVerificationScreen extends StatefulWidget {
   const OTPVerificationScreen({super.key});
@@ -17,29 +20,141 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
       if (!mounted) return;
       setState(() => _isLoading = true);
 
-      // TODO: Add your external API call here
-      // Example: await yourApiService.verifyOTP(_otpController.text.trim());
-      
-      // Simulate API call delay
-      await Future.delayed(const Duration(seconds: 2));
+      final supabase = Supabase.instance.client;
+      final user = supabase.auth.currentUser;
+      if (user == null) {
+        if (!mounted) return;
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No user logged in')),
+        );
+        return;
+      }
+
+      // Fetch referenceNo from api_data for the current user
+      final responseRef = await supabase
+          .from('api_data')
+          .select('reference_no')
+          .eq('user_id', user.id)
+          .single();
+      final referenceNo = responseRef['reference_no'] as String? ?? '';
+
+      if (referenceNo.isEmpty) {
+        if (!mounted) return;
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No reference number found')),
+        );
+        return;
+      }
+
+      // Prepare JSON body
+      final body = {
+        'applicationId': 'APP_009348', // Replace with your app ID
+        'password':
+            '953fe2fee66c8b602c05284a8f98f090', // Replace with your password
+        'referenceNo': referenceNo,
+        'otp': _otpController.text.trim(),
+      };
+
+      // Call OTP verify API
+      final url = Uri.parse('http://56.228.42.92:8000/otp/verify');
+      final responseApi = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json;charset=utf-8'},
+        body: jsonEncode(body),
+      );
 
       if (!mounted) return;
       setState(() => _isLoading = false);
-      
-      // TODO: Handle API response and navigation
-      // If successful, navigate to home screen
-      // If error, show error message
+
+      if (responseApi.statusCode == 200) {
+        final responseData = jsonDecode(responseApi.body);
+        if (responseData['statusCode'] == 'S1000') {
+          // Save subscriberId to api_data
+          final subscriberId = responseData['subscriberId'] as String? ?? '';
+          await supabase
+              .from('api_data')
+              .update({'sub_id': subscriberId}).eq('user_id', user.id);
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Verification successful')),
+          );
+          // Redirect to GardenSetupScreen
+          Navigator.pushReplacementNamed(
+              context, '/garden_setup'); // Adjust route
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content: Text(
+                    'Verification failed: ${responseData['statusDetail']}')),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${responseApi.body}')),
+        );
+      }
     }
   }
 
   Future<void> _resendOTP() async {
-    // TODO: Add your external API call to resend OTP
-    // Example: await yourApiService.resendOTP();
-    
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('OTP resent successfully')),
+    setState(() => _isLoading = true);
+
+    final supabase = Supabase.instance.client;
+    final user = supabase.auth.currentUser;
+    if (user == null) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No user logged in')),
+      );
+      return;
+    }
+
+    final responseRef = await supabase
+        .from('api_data')
+        .select('reference_no')
+        .eq('user_id', user.id)
+        .single();
+    final referenceNo = responseRef['reference_no'] as String? ?? '';
+
+    if (referenceNo.isEmpty) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No reference number found')),
+      );
+      return;
+    }
+
+    final body = {
+      'applicationId': 'APP_009348', // Replace with your app ID
+      'password':
+          '953fe2fee66c8b602c05284a8f98f090', // Replace with your password
+      'subscriberId': 'tel:94716177301', // Adjust based on your logic
+    };
+
+    final url = Uri.parse('http://56.228.42.92:8000/otp/request');
+    final responseApi = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json;charset=utf-8'},
+      body: jsonEncode(body),
     );
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (responseApi.statusCode == 200) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('OTP resent successfully')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Resend failed: ${responseApi.body}')),
+      );
+    }
   }
 
   @override
@@ -54,7 +169,6 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Back button
                 Row(
                   children: [
                     IconButton(
@@ -67,10 +181,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                     ),
                   ],
                 ),
-                
                 const SizedBox(height: 60),
-
-                // Center the title
                 Center(
                   child: Column(
                     children: [
@@ -95,20 +206,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 60),
-
-                // OTP Input Field
-                const Text(
-                  'Enter OTP',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFF003300),
-                  ),
-                ),
-                const SizedBox(height: 8),
-
                 TextFormField(
                   controller: _otpController,
                   keyboardType: TextInputType.number,
@@ -144,10 +242,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                     return null;
                   },
                 ),
-
                 const SizedBox(height: 24),
-
-                // Resend OTP
                 Center(
                   child: TextButton(
                     onPressed: _resendOTP,
@@ -160,10 +255,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 40),
-
-                // Verify Button
                 SizedBox(
                   width: double.infinity,
                   height: 56,
@@ -187,7 +279,6 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
                           ),
                   ),
                 ),
-
                 const SizedBox(height: 32),
               ],
             ),
