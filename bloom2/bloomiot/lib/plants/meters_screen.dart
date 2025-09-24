@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:syncfusion_flutter_gauges/gauges.dart';
-import 'package:bloomiot/mainscreens/home.dart'; 
+import 'package:bloomiot/mainscreens/home.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -13,13 +13,15 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.green,
       ),
-      home: SensorDashboard(),
+      home: SensorDashboard(plantId: 'Set_1'), // Example start with Set_1
     );
   }
 }
 
 class SensorDashboard extends StatefulWidget {
-  const SensorDashboard({super.key});
+  final String
+      plantId; // Dynamic plant ID (e.g., 'Set_1', 'Set_2', ..., 'Set_9')
+  const SensorDashboard({super.key, required this.plantId});
 
   @override
   _SensorDashboardState createState() => _SensorDashboardState();
@@ -39,28 +41,30 @@ class _SensorDashboardState extends State<SensorDashboard> {
   }
 
   void _activateListeners() {
-    _database.child('sensors/light_level').onValue.listen((event) {
+    String basePath = 'Plant_Sensors/${widget.plantId}';
+
+    _database.child('$basePath/light_level').onValue.listen((event) {
       final value = event.snapshot.value;
       setState(() {
         lightLevel = _toDouble(value);
       });
     });
 
-    _database.child('sensors/soil_moisture').onValue.listen((event) {
+    _database.child('$basePath/soil_moisture').onValue.listen((event) {
       final value = event.snapshot.value;
       setState(() {
         soilMoisture = _toDouble(value);
       });
     });
 
-    _database.child('sensors/humidity').onValue.listen((event) {
+    _database.child('$basePath/humidity').onValue.listen((event) {
       final value = event.snapshot.value;
       setState(() {
         humidity = _toDouble(value);
       });
     });
 
-    _database.child('sensors/ds18b20_temperature').onValue.listen((event) {
+    _database.child('$basePath/ds18b20_temperature').onValue.listen((event) {
       final value = event.snapshot.value;
       setState(() {
         temperature = _toDouble(value);
@@ -95,7 +99,7 @@ class _SensorDashboardState extends State<SensorDashboard> {
           color: Colors.black87,
         ),
         title: Text(
-          'Plant Sensor Dashboard',
+          'Sensor Dashboard', // Dynamic title
           style: TextStyle(
             fontWeight: FontWeight.w600,
             color: const Color(0xFF1B5E20),
